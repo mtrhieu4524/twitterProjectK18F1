@@ -113,6 +113,47 @@ class UsersService {
 
   // ======================================================================================================================
 
+  async resendEmailVerify(user_id: string) {
+    //tạo ra email_verify_token mới
+    const email_verify_token = await this.signEmailVerifyToken(user_id)
+    //chưa làm chức năng gữi email, nên giả bộ ta đã gữi email cho client rồi, hiển thị bằng console.log
+    console.log('resend verify email token', email_verify_token)
+    //vào database và cập nhật lại email_verify_token mới trong table user
+    await databaseService.users.updateOne({ _id: new ObjectId(user_id) }, [
+      {
+        $set: { email_verify_token: email_verify_token, updated_at: '$$NOW' }
+      }
+    ])
+    //trả về message
+    return {
+      message: USERS_MESSAGES.RESEND_VERIFY_EMAIL_SUCCESS
+    }
+  }
+
+  // ======================================================================================================================
+
+  async forgotPassword(user_id: string) {
+    //tạo ra forgot_password_token
+    const forgot_password_token = await this.signForgotPasswordToken(user_id)
+    //cập nhật vào forgot_password_token và user_id
+    await databaseService.users.updateOne({ _id: new ObjectId(user_id) }, [
+      {
+        $set: { forgot_password_token: forgot_password_token, updated_at: '$$NOW' }
+      }
+    ])
+    //gữi email cho người dùng đường link có cấu trúc như này
+    //http://appblabla/forgot-password?token=xxxx
+    //xxxx trong đó xxxx là forgot_password_token
+    //sau này ta sẽ dùng aws để làm chức năng gữi email, giờ ta k có
+    //ta log ra để test
+    console.log('Forgot_password_token: ', forgot_password_token)
+    return {
+      message: USERS_MESSAGES.CHECK_EMAIL_TO_RESET_PASSWORD
+    }
+  }
+
+  // ======================================================================================================================
+
   /*
       Hàm nhận vào user_id và bỏ vào payload để tạo access và refresh_token
   */
@@ -160,6 +201,15 @@ class UsersService {
       options: {
         expiresIn: process.env.EMAIL_VERIFY_TOKEN_EXPIRE_IN
       }
+    })
+  }
+
+  //tạo hàm signForgotPasswordToken
+  private signForgotPasswordToken(user_id: string) {
+    return signToken({
+      payload: { user_id, token_type: TokenType.ForgotPasswordToken },
+      options: { expiresIn: process.env.FORGOT_PASSWORD_TOKEN_EXPIRE_IN },
+      privateKey: process.env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string //thêm
     })
   }
 }
