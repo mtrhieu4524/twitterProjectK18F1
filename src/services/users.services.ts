@@ -5,7 +5,7 @@ import { hashPassword } from '~/utils/crypto'
 import { signToken } from '~/utils/jwt'
 import { TokenType } from '~/constants/enums'
 import { ObjectId } from 'mongodb'
-import RefreshToken from '~/models/RefreshToken.schema'
+import RefreshToken from '~/models/schemas/RefreshToken.schema'
 import { USERS_MESSAGES } from '~/constants/messages'
 
 class UsersService {
@@ -42,6 +42,7 @@ class UsersService {
       this.signRefreshToken(user_id)
     ])
 
+    // ** lưu refresh_token vào database
     await databaseService.refreshTokens.insertOne(
       new RefreshToken({
         token: refresh_token,

@@ -215,12 +215,11 @@ export const accessTokenValidator = validate(
   checkSchema(
     {
       Authorization: {
+        trim: true,
         notEmpty: {
           //kiểm tra có gữi lên không
           errorMessage: USERS_MESSAGES.ACCESS_TOKEN_IS_REQUIRED
         },
-
-        trim: true,
         custom: {
           //value là giá trị của Authorization, req là req của client gữi lên server
           options: async (value: string, { req }) => {
@@ -236,6 +235,10 @@ export const accessTokenValidator = validate(
                 status: HTTP_STATUS.UNAUTHORIZED
               })
             }
+            /*
+              nếu có access_token thì verify
+              lấy ra decoded_authorization (payload), lưu vào req, để dùng dần
+            */
             try {
               // 1. kiểm tra xem access_token có hợp lệ hay không - [verify accessToken có phải mình kí ra k]
               const decoded_authorization = await verifyToken({ token: access_token })
@@ -266,12 +269,11 @@ export const refreshTokenValidator = validate(
   checkSchema(
     {
       refresh_token: {
+        trim: true,
         notEmpty: {
           //kiểm tra có gữi lên không
           errorMessage: USERS_MESSAGES.REFRESH_TOKEN_IS_REQUIRED
         },
-
-        trim: true,
         custom: {
           //verify giá trị của refresh_token xem có hợp lệ hay không, quá trình này có thể phát sinh lỗi
           //nếu không có lỗi thì lưu decoded_refresh_token vào req để khi nào muốn biết ai gữi req thì dùng
