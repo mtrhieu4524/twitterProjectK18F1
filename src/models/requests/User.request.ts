@@ -14,7 +14,12 @@ export interface RegisterReqBody {
 export interface LogoutReqBody {
   refresh_token: string
 }
+
 export interface TokenPayload extends JwtPayload {
   user_id: string
   token_type: TokenType
+}
+
+export interface EmailVerifyReqBody {
+  email_verify_token: string
 }

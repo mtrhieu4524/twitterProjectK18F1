@@ -1,7 +1,13 @@
 import { Router } from 'express'
-import { loginController, logoutController, registerController } from '~/controllers/users.controllers'
+import {
+  emailVerifyController,
+  loginController,
+  logoutController,
+  registerController
+} from '~/controllers/users.controllers'
 import {
   accessTokenValidator,
+  emailVerifyValidator,
   loginValidator,
   refreshTokenValidator,
   registerValidator
@@ -15,7 +21,7 @@ usersRoute.post('/register', registerValidator, wrapAsync(registerController))
 
 /*
         --- DESCRIPTION ---
-            Đăng xuất
+             Đăng xuất
     path: /users/logout
     method: POST
     header: (Authorization: "Bearer <access_token>")
@@ -23,4 +29,15 @@ usersRoute.post('/register', registerValidator, wrapAsync(registerController))
 */
 usersRoute.post('/logout', accessTokenValidator, refreshTokenValidator, wrapAsync(logoutController))
 
+/*
+        --- DESCRIPTION ---
+            Verify Email
+  - Khi ng dùng đăng kí, trong email của họ sẽ có 1 link
+  trong link này đã setup sẵn 1 req kèm email_verify_token
+  thì verify email là cái route cho req đó
+  - method: POST
+  - path: /users/verify-email
+  - body: {email_verify_token: string}
+*/
+usersRoute.post('/verify-email', emailVerifyValidator, wrapAsync(emailVerifyController))
 export default usersRoute

@@ -1,4 +1,3 @@
-import { registerController } from '~/controllers/users.controllers'
 // giả sử đang làm route '/login'
 // thì ng dùng sẽ truyền email và password
 // tạo 1 cái req có body là email và password
@@ -216,10 +215,6 @@ export const accessTokenValidator = validate(
     {
       Authorization: {
         trim: true,
-        notEmpty: {
-          //kiểm tra có gữi lên không
-          errorMessage: USERS_MESSAGES.ACCESS_TOKEN_IS_REQUIRED
-        },
         custom: {
           //value là giá trị của Authorization, req là req của client gữi lên server
           options: async (value: string, { req }) => {
@@ -241,7 +236,10 @@ export const accessTokenValidator = validate(
             */
             try {
               // 1. kiểm tra xem access_token có hợp lệ hay không - [verify accessToken có phải mình kí ra k]
-              const decoded_authorization = await verifyToken({ token: access_token })
+              const decoded_authorization = await verifyToken({
+                token: access_token,
+                secretOrPublicKey: process.env.JWT_SECRET_ACCESS_TOKEN as string
+              })
 
               //nếu không có lỗi thì ta lưu decoded_authorization vào req để khi nào muốn biết ai gữi req thì dùng
               ;(req as Request).decoded_authorization = decoded_authorization
@@ -270,10 +268,6 @@ export const refreshTokenValidator = validate(
     {
       refresh_token: {
         trim: true,
-        notEmpty: {
-          //kiểm tra có gữi lên không
-          errorMessage: USERS_MESSAGES.REFRESH_TOKEN_IS_REQUIRED
-        },
         custom: {
           //verify giá trị của refresh_token xem có hợp lệ hay không, quá trình này có thể phát sinh lỗi
           //nếu không có lỗi thì lưu decoded_refresh_token vào req để khi nào muốn biết ai gữi req thì dùng
@@ -288,7 +282,7 @@ export const refreshTokenValidator = validate(
             try {
               // 1. kiểm tra xem refresh_token có hợp lệ hay không - [verify refreshToken có phải mình kí ra k]
               const [decoded_refresh_token, refresh_token] = await Promise.all([
-                verifyToken({ token: value }),
+                verifyToken({ token: value, secretOrPublicKey: process.env.JWT_SECRET_REFRESH_TOKEN as string }),
                 databaseService.refreshTokens.findOne({ token: value })
               ])
               if (refresh_token === null) {
@@ -322,3 +316,47 @@ export const refreshTokenValidator = validate(
 )
 
 // ======================================================================================================================
+
+export const emailVerifyValidator = validate(
+  checkSchema(
+    {
+      email_verify_token: {
+        trim: true,
+        custom: {
+          options: async (value: string, { req }) => {
+            // nếu email_verify_token k gửi lên thì response lỗi
+            if (!value) {
+              throw new ErrorWithStatus({
+                message: USERS_MESSAGES.EMAIL_VERIFY_TOKEN_IS_REQUIRED,
+                status: HTTP_STATUS.UNAUTHORIZED
+              })
+            }
+            try {
+              const decoded_email_verify_token = await verifyToken({
+                token: value,
+                secretOrPublicKey: process.env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string
+              })
+
+              //nếu không có lỗi thì ta lưu decoded_refresh_token vào req để khi nào muốn biết ai gữi req thì dùng
+              ;(req as Request).decoded_email_verify_token = decoded_email_verify_token
+            } catch (error) {
+              // 2. Nếu là của server tạo ra thì lưu lại payload
+              if (error instanceof JsonWebTokenError) {
+                throw new ErrorWithStatus({
+                  //(error as JsonWebTokenError).message sẽ cho chuỗi `accesstoken invalid`, không đẹp lắm
+                  //ta sẽ viết hóa chữ đầu tiên bằng .capitalize() của lodash
+                  message: USERS_MESSAGES.REFRESH_TOKEN_IS_INVALID,
+                  status: HTTP_STATUS.UNAUTHORIZED
+                })
+              }
+              // nếu lỗi kh phát sinh quá trình verify thì mình tạo thành lỗi có status
+              throw error
+            }
+            return true
+          }
+        }
+      }
+    },
+    ['body']
+  )
+)

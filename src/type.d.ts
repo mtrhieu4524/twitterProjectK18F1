@@ -10,5 +10,6 @@ declare module 'express' {
     user?: User //thêm ? vì k phải request nào cũng có user
     decoded_authorization?: TokenPayload
     decoded_refresh_token?: TokenPayload
+    decoded_email_verify_token?: TokenPayload
   }
 }
