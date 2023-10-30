@@ -6,13 +6,11 @@ config()
 // * hàm nhận vào payload, privateKey, options từ đó kí tên
 export const signToken = ({
   // biến 2 parameter thành object
-
   payload,
   privateKey = process.env.JWT_SECRET as string, // nếu trong quá trình k nói thì đưa pwd gốc
   options = { algorithm: 'HS256' }
 }: {
   // định nghĩa object
-
   payload: string | object | Buffer
   privateKey?: string
   options?: jwt.SignOptions
@@ -29,7 +27,7 @@ export const signToken = ({
   })
 }
 
-// ======================================================================================================================q
+// ======================================================================================================================
 
 // Hàm kiểm tra token có phải của mình tạo ra k
 //  nếu có thì trả ra payload

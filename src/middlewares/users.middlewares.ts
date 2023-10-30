@@ -287,8 +287,10 @@ export const refreshTokenValidator = validate(
           options: async (value: string, { req }) => {
             try {
               // 1. kiểm tra xem refresh_token có hợp lệ hay không - [verify refreshToken có phải mình kí ra k]
-              const decoded_refresh_token = await verifyToken({ token: value })
-              const refresh_token = await databaseService.refreshTokens.findOne({ token: value })
+              const [decoded_refresh_token, refresh_token] = await Promise.all([
+                verifyToken({ token: value }),
+                databaseService.refreshTokens.findOne({ token: value })
+              ])
               if (refresh_token === null) {
                 throw new ErrorWithStatus({
                   message: USERS_MESSAGES.USED_REFRESH_TOKEN_OR_NOT_EXIST,
