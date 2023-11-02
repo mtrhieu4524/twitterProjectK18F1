@@ -15,6 +15,7 @@ import { USERS_MESSAGES } from '~/constants/messages'
 import databaseService from '~/services/database.services'
 import HTTP_STATUS from '~/constants/httpStatus'
 import { UserVerifyStatus } from '~/constants/enums'
+import { ErrorWithStatus } from '~/models/Errors'
 
 export const loginController = async (req: Request, res: Response) => {
   // vào req lấy user ra, và lấy _id của user đó
@@ -58,17 +59,25 @@ export const logoutController = async (req: Request<ParamsDictionary, any, Logou
 
 export const emailVerifyController = async (req: Request<ParamsDictionary, any, EmailVerifyReqBody>, res: Response) => {
   // khi mà req vào đc đây nghĩa là email_verify_token đã valid
-  // đồng thời trong req sẽ có decoded_email_verify_token
+  // đồng thời trong req sẽ có decoded_email_verify_token [lấy đc payload]
   const { user_id } = req.decoded_email_verify_token as TokenPayload
-  // tìm xem có user có mã này kh
+  // dừa vào user_id tìm user xem nó đã verify chưa ?
   const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
   if (user === null) {
     return res.status(HTTP_STATUS.NOT_FOUND).json({
       message: USERS_MESSAGES.USER_NOT_FOUND
     })
   }
+
+  if (user.email_verify_token !== (req.body.email_verify_token as string)) {
+    throw new ErrorWithStatus({
+      message: USERS_MESSAGES.EMAIL_VERIFY_TOKEN_IS_INCORRECT,
+      status: HTTP_STATUS.UNAUTHORIZED
+    })
+  }
+
   // nếu có user đó thì mình sẽ kiểm tra xem user đó lưu email_verify_token kh ?
-  if (user.email_verify_token === '') {
+  if (user.verify === UserVerifyStatus.Verified && user.email_verify_token === '') {
     return res.json({
       message: USERS_MESSAGES.EMAIL_ALREADY_VERIFIED_BEFORE
     })
@@ -97,10 +106,18 @@ export const resendEmailVerifyController = async (req: Request, res: Response) =
       message: USERS_MESSAGES.USER_NOT_FOUND
     })
   }
+
   // nếu có thì xem thử nó đã verify chưa
-  if (user.verify === UserVerifyStatus.Verified) {
+  if (user.verify === UserVerifyStatus.Verified && user.email_verify_token === '') {
     return res.json({
       message: USERS_MESSAGES.EMAIL_ALREADY_VERIFIED_BEFORE
+    })
+  }
+
+  if (user.verify === UserVerifyStatus.Banned) {
+    throw new ErrorWithStatus({
+      message: USERS_MESSAGES.USER_BANNED,
+      status: HTTP_STATUS.FORBIDDEN
     })
   }
   //nếu user chưa verify email thì ta sẽ gữi lại email verify cho họ

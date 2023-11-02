@@ -333,13 +333,14 @@ export const emailVerifyValidator = validate(
                 status: HTTP_STATUS.UNAUTHORIZED
               })
             }
+            // verify email_verify_token để lấy decoded_email_verify_token
             try {
               const decoded_email_verify_token = await verifyToken({
                 token: value,
                 secretOrPublicKey: process.env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string
               })
 
-              //nếu không có lỗi thì ta lưu decoded_refresh_token vào req để khi nào muốn biết ai gữi req thì dùng
+              // sau khi verify thành công ta đc payload của email_verify_token: decoded_email_verify_token
               ;(req as Request).decoded_email_verify_token = decoded_email_verify_token
             } catch (error) {
               // 2. Nếu là của server tạo ra thì lưu lại payload
@@ -381,7 +382,7 @@ export const forgotPasswordValidator = validate(
           //nếu không tìm đc user thì nói user không tồn tại
           //khỏi tiến vào controller nữa
           if (user === null) {
-            throw new Error(USERS_MESSAGES.USER_NOT_FOUND) //422
+            throw new ErrorWithStatus({ message: USERS_MESSAGES.USER_NOT_FOUND, status: HTTP_STATUS.NOT_FOUND }) //422
           }
           //đến đâu thì oke
           req.user = user // lưu user mới tìm đc lại luôn, khi nào cần thì xài
@@ -408,6 +409,7 @@ export const verifyForgotPasswordTokenValidator = validate(
                 status: HTTP_STATUS.UNAUTHORIZED //401
               })
             }
+
             try {
               const decoded_forgot_password_token = await verifyToken({
                 token: value,
@@ -421,6 +423,7 @@ export const verifyForgotPasswordTokenValidator = validate(
               const user = await databaseService.users.findOne({
                 _id: new ObjectId(user_id)
               })
+
               //nếu k tìm đc user thì throw error
               if (user === null) {
                 throw new ErrorWithStatus({
@@ -433,18 +436,22 @@ export const verifyForgotPasswordTokenValidator = validate(
               //nghĩa là người dùng đã sử dụng forgot_password_token này rồi
               if (user.forgot_password_token !== value) {
                 throw new ErrorWithStatus({
-                  message: USERS_MESSAGES.INVALID_FORGOT_PASSWORD_TOKEN,
+                  message: USERS_MESSAGES.FORGOT_PASSWORD_TOKEN_IS_INCORRECT,
                   status: HTTP_STATUS.UNAUTHORIZED //401
                 })
               }
               //trong messages.ts thêm   INVALID_FORGOT_PASSWORD_TOKEN: 'Invalid forgot password token'
             } catch (error) {
+              // 2. Nếu là của server tạo ra thì lưu lại payload
               if (error instanceof JsonWebTokenError) {
                 throw new ErrorWithStatus({
-                  message: capitalize((error as JsonWebTokenError).message),
-                  status: HTTP_STATUS.UNAUTHORIZED //401
+                  //(error as JsonWebTokenError).message sẽ cho chuỗi `accesstoken invalid`, không đẹp lắm
+                  //ta sẽ viết hóa chữ đầu tiên bằng .capitalize() của lodash
+                  message: USERS_MESSAGES.REFRESH_TOKEN_IS_INVALID,
+                  status: HTTP_STATUS.UNAUTHORIZED
                 })
               }
+              // nếu lỗi kh phát sinh quá trình verify thì mình tạo thành lỗi có status
               throw error
             }
             return true

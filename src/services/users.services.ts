@@ -92,7 +92,7 @@ class UsersService {
           // tìm user thông qua user_id
         },
         [
-          // để ngoặc vuông để k bị bug
+          // ** để ngoặc vuông biến thành mảng để k bị bug **
           {
             $set: {
               email_verify_token: '',
@@ -107,7 +107,9 @@ class UsersService {
     //destructuring token
     const [access_token, refresh_token] = token
     // lưu refresh token vào database
-    await databaseService.refreshTokens.insertOne(new RefreshToken({ token: refresh_token, user_id: new ObjectId() }))
+    await databaseService.refreshTokens.insertOne(
+      new RefreshToken({ token: refresh_token, user_id: new ObjectId(user_id) }) // *** Trong video chỗ này khác ***
+    )
     return { access_token, refresh_token }
   }
 
@@ -116,14 +118,14 @@ class UsersService {
   async resendEmailVerify(user_id: string) {
     //tạo ra email_verify_token mới
     const email_verify_token = await this.signEmailVerifyToken(user_id)
-    //chưa làm chức năng gữi email, nên giả bộ ta đã gữi email cho client rồi, hiển thị bằng console.log
-    console.log('resend verify email token', email_verify_token)
     //vào database và cập nhật lại email_verify_token mới trong table user
     await databaseService.users.updateOne({ _id: new ObjectId(user_id) }, [
       {
-        $set: { email_verify_token: email_verify_token, updated_at: '$$NOW' }
+        $set: { email_verify_token, updated_at: '$$NOW' }
       }
     ])
+    //chưa làm chức năng gữi email, nên giả bộ ta đã gữi email cho client rồi, hiển thị bằng console.log
+    console.log('Resend verify email token: ', email_verify_token)
     //trả về message
     return {
       message: USERS_MESSAGES.RESEND_VERIFY_EMAIL_SUCCESS
