@@ -55,5 +55,18 @@ export const USERS_MESSAGES = {
   USER_BANNED: 'User banned',
   EMAIL_VERIFY_TOKEN_IS_INCORRECT: 'Email verify token is incorrect',
   RESET_PASSWORD_SUCCESS: 'Reset password success',
-  GET_ME_SUCCESS: 'Get me success'
+  GET_ME_SUCCESS: 'Get me success',
+  USER_IS_NOT_VERIFIED: 'User is not verify',
+  IMAGE_URL_MUST_BE_A_STRING: 'Image url must be a string',
+  IMAGE_URL_LENGTH_MUST_BE_LESS_THAN_400: 'Image url length must be less than 400',
+  BIO_MUST_BE_A_STRING: 'Bio must be a string',
+  BIO_LENGTH_MUST_BE_LESS_THAN_200: 'Bio length must be less than 200',
+  LOCATION_MUST_BE_A_STRING: 'Location must be a string',
+  LOCATION_LENGTH_MUST_BE_LESS_THAN_200: 'Location length must be less than 200',
+  WEBSITE_MUST_BE_A_STRING: 'Website must be a string',
+  WEBSITE_LENGTH_MUST_BE_LESS_THAN_200: 'Website length must be less than 200',
+  USERNAME_MUST_BE_A_STRING: 'Username must be a string',
+  USERNAME_LENGTH_MUST_BE_LESS_THAN_50: 'Username length must be less than 50',
+  UPDATE_ME_SUCCESS: 'Update me success',
+  GET_PROFILE_SUCCESS: 'Get profile success'
 } as const

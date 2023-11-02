@@ -3,13 +3,16 @@ import {
   emailVerifyController,
   forgotPasswordController,
   getMeController,
+  getProfileController,
   loginController,
   logoutController,
   registerController,
   resendEmailVerifyController,
   resetPasswordController,
+  updateMeController,
   verifyForgotPasswordTokenController
 } from '~/controllers/users.controllers'
+import { filterMiddleware } from '~/middlewares/common.middlewares'
 import {
   accessTokenValidator,
   emailVerifyValidator,
@@ -18,8 +21,11 @@ import {
   refreshTokenValidator,
   registerValidator,
   resetPasswordValidator,
+  updateMeValidator,
+  verifiedUserValidator,
   verifyForgotPasswordTokenValidator
 } from '~/middlewares/users.middlewares'
+import { UpdateMeReqBody } from '~/models/requests/User.request'
 import { wrapAsync } from '~/utils/handlers'
 const usersRoute = Router()
 
@@ -76,7 +82,8 @@ usersRoute.post('/forgot-password', forgotPasswordValidator, wrapAsync(forgotPas
           --- DESCRIPTION ---
             Forgot Password
 
-  -> Khi người dùng nhấp vào link trong email để reset password họ sẽ gữi 1 req kèm theo forgot_password_ _token lên server server sẽ kiểm tra forgot_password_token có hợp lệ hay không ?
+  -> Khi người dùng nhấp vào link trong email để reset password họ sẽ gữi 1 req kèm theo forgot_password_token lên server 
+      server sẽ kiểm tra forgot_password_token có hợp lệ hay không ?
       sau đó chuyến hướng người dùng đến trang reset password
       
   - path: /verify-forgot-password
@@ -115,5 +122,32 @@ Header: {Authorization: Bearer <access_token>}
 body: {}
 */
 usersRoute.get('/me', accessTokenValidator, wrapAsync(getMeController))
+
+usersRoute.patch(
+  '/me',
+  accessTokenValidator,
+  verifiedUserValidator,
+  filterMiddleware<UpdateMeReqBody>([
+    'name',
+    'date_of_birth',
+    'bio',
+    'location',
+    'website',
+    'avatar',
+    'username',
+    'cover_photo'
+  ]),
+  updateMeValidator,
+  wrapAsync(updateMeController)
+)
+
+/*
+          --- DESCRIPTION ---
+  Get profile của user khác bằng unsername 
+  - path: '/:username'
+  - method: get
+  - không cần header vì, chưa đăng nhập cũng có thể xem
+*/
+usersRoute.get('/:username', wrapAsync(getProfileController))
 
 export default usersRoute

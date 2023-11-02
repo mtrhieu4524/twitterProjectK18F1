@@ -1,4 +1,4 @@
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import User from '~/models/schemas/User.schema'
 import usersService from '~/services/users.services'
 import { ParamsDictionary } from 'express-serve-static-core'
@@ -9,7 +9,9 @@ import {
   TokenPayload,
   ForgotPasswordReqBody,
   VerifyForgotPasswordReqBody,
-  ResetPasswordReqBody
+  ResetPasswordReqBody,
+  UpdateMeReqBody,
+  GetProfileReqParams
 } from '~/models/requests/User.request'
 import { ObjectId } from 'mongodb'
 import { USERS_MESSAGES } from '~/constants/messages'
@@ -26,7 +28,7 @@ export const loginController = async (req: Request, res: Response) => {
   // * id lấy từ trên mongoDB xuống nên là phải toString() *
 
   // dùng cái user_id đó tạo access và refresh_token
-  const result = await usersService.login(user_id.toString())
+  const result = await usersService.login({ user_id: user_id.toString(), verify: user.verify })
   // nếu k bug j thì thành công lun
   return res.json({
     message: USERS_MESSAGES.LOGIN_SUCCESS,
@@ -135,9 +137,9 @@ export const forgotPasswordController = async (
   res: Response
 ) => {
   //middleware forgotPasswordValidator đã chạy rồi, nên ta có thể lấy _id từ user đã tìm đc bằng email
-  const { _id } = req.user as User
+  const { _id, verify } = req.user as User
   // tiến hành tạo forgot_password_token và lưu vào user đó kèm gửi mail cho user đó
-  const result = await usersService.forgotPassword((_id as ObjectId).toString())
+  const result = await usersService.forgotPassword({ user_id: (_id as ObjectId).toString(), verify })
   return res.json(result)
 }
 
@@ -178,5 +180,38 @@ export const getMeController = async (req: Request, res: Response) => {
   return res.json({
     message: USERS_MESSAGES.GET_ME_SUCCESS,
     result: result
+  })
+}
+
+// ======================================================================================================================
+
+export const updateMeController = async (
+  req: Request<ParamsDictionary, any, UpdateMeReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  //middleware accessTokenValidator đã chạy rồi, nên ta có thể lấy đc user_id từ decoded_authorization
+  const { user_id } = req.decoded_authorization as TokenPayload
+  //user_id để biết phải cập nhật ai
+  //lấy thông tin mới từ req.body
+  const { body } = req
+  //lấy các property mà client muốn cập nhật
+  //ta sẽ viết hàm updateMe trong user.services
+  //nhận vào user_id và body để cập nhật
+  const result = await usersService.updateMe(user_id, body)
+  return res.json({
+    message: USERS_MESSAGES.UPDATE_ME_SUCCESS, //meesage.ts thêm
+    result
+  })
+}
+
+// ======================================================================================================================
+
+export const getProfileController = async (req: Request<GetProfileReqParams>, res: Response, next: NextFunction) => {
+  const { username } = req.params //lấy username từ query params
+  const result = await usersService.getProfile(username)
+  return res.json({
+    message: USERS_MESSAGES.GET_PROFILE_SUCCESS,
+    result
   })
 }
