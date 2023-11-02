@@ -49,6 +49,9 @@ usersRoute.post('/verify-email', emailVerifyValidator, wrapAsync(emailVerifyCont
 /*
         --- DESCRIPTION ---
         Resend Verify Email
+  -> Khi  mail thất lạc , hoặc email_verify_token hết hạn, thì người dùng có
+    nhu cầu resend email_verify_token
+        
   - method: POST
   - headers: {Authorization: Bearer <access_token></access_token>}
 */
@@ -68,7 +71,11 @@ usersRoute.post('/forgot-password', forgotPasswordValidator, wrapAsync(forgotPas
 
 /*
           --- DESCRIPTION ---
-          Forgot Password
+            Forgot Password
+
+  -> Khi người dùng nhấp vào link trong email để reset password họ sẽ gữi 1 req kèm theo forgot_password_ _token lên server server sẽ kiểm tra forgot_password_token có hợp lệ hay không ?
+      sau đó chuyến hướng người dùng đến trang reset password
+      
   - path: /verify-forgot-password
   - method: POST
   - Header: không cần, vì  ngta quên mật khẩu rồi, thì sao mà đăng nhập để có authen đc
