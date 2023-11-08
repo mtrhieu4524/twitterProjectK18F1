@@ -5,7 +5,7 @@ import { defaultErrorHandler } from './middlewares/error.middlewares'
 
 const app = express()
 app.use(express.json()) // express.json() dùng để express đọc đc req.body ở định dạng json
-const PORT = 3000
+const PORT = 4000
 databaseService.connect()
 
 // route mặc định localhost:3000/

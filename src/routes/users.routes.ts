@@ -1,26 +1,33 @@
 import { Router } from 'express'
 import {
+  changePasswordController,
   emailVerifyController,
+  followController,
   forgotPasswordController,
   getMeController,
   getProfileController,
   loginController,
   logoutController,
+  refreshTokenController,
   registerController,
   resendEmailVerifyController,
   resetPasswordController,
+  unfollowController,
   updateMeController,
   verifyForgotPasswordTokenController
 } from '~/controllers/users.controllers'
 import { filterMiddleware } from '~/middlewares/common.middlewares'
 import {
   accessTokenValidator,
+  changePasswordValidator,
   emailVerifyValidator,
+  followValidator,
   forgotPasswordValidator,
   loginValidator,
   refreshTokenValidator,
   registerValidator,
   resetPasswordValidator,
+  unfollowValidator,
   updateMeValidator,
   verifiedUserValidator,
   verifyForgotPasswordTokenValidator
@@ -29,7 +36,7 @@ import { UpdateMeReqBody } from '~/models/requests/User.request'
 import { wrapAsync } from '~/utils/handlers'
 const usersRoute = Router()
 
-usersRoute.get('/login', loginValidator, wrapAsync(loginController))
+usersRoute.post('/login', loginValidator, wrapAsync(loginController))
 
 usersRoute.post('/register', registerValidator, wrapAsync(registerController))
 
@@ -149,5 +156,58 @@ usersRoute.patch(
   - không cần header vì, chưa đăng nhập cũng có thể xem
 */
 usersRoute.get('/:username', wrapAsync(getProfileController))
+
+/*
+des: Follow someone
+path: '/follow'
+method: post
+headers: {Authorization: Bearer <access_token>}
+body: {followed_user_id: string}
+*/
+usersRoute.post('/follow', accessTokenValidator, verifiedUserValidator, followValidator, wrapAsync(followController))
+
+/*
+    des: unfollow someone
+    path: '/follow/:user_id'
+    method: delete
+    headers: {Authorization: Bearer <access_token>}
+    */
+usersRoute.delete(
+  '/unfollow/:user_id',
+  accessTokenValidator,
+  verifiedUserValidator,
+  unfollowValidator,
+  wrapAsync(unfollowController)
+)
+
+//unfollowValidator: kiểm tra user_id truyền qua params có hợp lệ hay k?
+
+/*
+  des: change password
+  path: '/change-password'
+  method: PUT
+  headers: {Authorization: Bearer <access_token>}
+  Body: {old_password: string, password: string, confirm_password: string}
+g}
+  */
+
+usersRoute.put(
+  '/change-password',
+  accessTokenValidator,
+  verifiedUserValidator,
+  changePasswordValidator,
+  wrapAsync(changePasswordController)
+)
+//changePasswordValidator kiểm tra các giá trị truyền lên trên body cớ valid k ?
+
+/*
+  des: refreshtoken
+  path: '/refresh-token'
+  method: POST
+  Body: {refresh_token: string}
+g}
+  */
+usersRoute.post('/refresh-token', refreshTokenValidator, wrapAsync(refreshTokenController))
+//khỏi kiểm tra accesstoken, tại nó hết hạn rồi mà
 
 export default usersRoute
