@@ -23,6 +23,8 @@ import databaseService from '~/services/database.services'
 import HTTP_STATUS from '~/constants/httpStatus'
 import { UserVerifyStatus } from '~/constants/enums'
 import { ErrorWithStatus } from '~/models/Errors'
+import { config } from 'dotenv'
+config()
 
 export const loginController = async (req: Request, res: Response) => {
   // vào req lấy user ra, và lấy _id của user đó
@@ -265,11 +267,19 @@ export const refreshTokenController = async (
   // khi qua middleware refreshTokenValidator thì ta đã có decoded_refresh_token
   //chứa user_id và token_type
   //ta sẽ lấy user_id để tạo ra access_token và refresh_token mới
-  const { user_id, verify } = req.decoded_refresh_token as TokenPayload //lấy refresh_token từ req.body
+  const { user_id, verify, exp } = req.decoded_refresh_token as TokenPayload //lấy refresh_token từ req.body
   const { refresh_token } = req.body
-  const result = await usersService.refreshToken({ user_id, verify, refresh_token }) //refreshToken chưa code
+  const result = await usersService.refreshToken({ user_id, verify, refresh_token, exp }) //refreshToken chưa code
   return res.json({
     message: USERS_MESSAGES.REFRESH_TOKEN_SUCCESS,
     result
   })
+}
+
+export const oAuthController = async (req: Request, res: Response, next: NextFunction) => {
+  const { code } = req.query // lấy code từ query params
+  //tạo đường dẫn truyền thông tin result để sau khi họ chọn tại khoản, ta check (tạo | login) xong thì điều hướng về lại client kèm thông tin at và rf
+  const { access_token, refresh_token, new_user } = await usersService.oAuth(code as string)
+  const urlRedirect = `${process.env.CLIENT_REDIRECT_CALLBACK}?access_token=${access_token}&refresh_token=${refresh_token}&new_user=${new_user}`
+  return res.redirect(urlRedirect)
 }

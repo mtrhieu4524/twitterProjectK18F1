@@ -8,6 +8,7 @@ import {
   getProfileController,
   loginController,
   logoutController,
+  oAuthController,
   refreshTokenController,
   registerController,
   resendEmailVerifyController,
@@ -210,4 +211,5 @@ g}
 usersRoute.post('/refresh-token', refreshTokenValidator, wrapAsync(refreshTokenController))
 //khỏi kiểm tra accesstoken, tại nó hết hạn rồi mà
 
+usersRoute.get('/oauth/google', wrapAsync(oAuthController))
 export default usersRoute
